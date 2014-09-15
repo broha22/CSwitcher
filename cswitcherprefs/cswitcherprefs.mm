@@ -49,13 +49,10 @@ UIColor *oldTintColor;
 }
 - (void)viewWillAppear:(BOOL)animated {
   [super viewWillAppear:animated];
-  ((UIView *)self.view).tintColor = [UIColor colorWithRed:146.f/255.f green:34.f/255.f blue:1 alpha:1];
   self.navigationController.navigationBar.tintColor = [UIColor colorWithRed:146.f/255.f green:34.f/255.f blue:1 alpha:1];
-  [UISwitch appearanceWhenContainedIn:self.class, nil].onTintColor = [UIColor colorWithRed:146.f/255.f green:34.f/255.f blue:1 alpha:1];
 }
 - (void)viewWillDisappear:(BOOL)animated {
   [super viewWillDisappear:animated];
-  ((UIView *)self.view).tintColor = nil;
   self.navigationController.navigationBar.tintColor = nil;
 }
 - (void)apply {
