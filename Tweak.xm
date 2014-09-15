@@ -69,7 +69,7 @@ static int oldOrientation;
 }
 %end
 %hook SBControlCenterViewController
-- (float)contentHeightForOrientation:(int)orientation {
+- (CGFloat)contentHeightForOrientation:(int)orientation {
   if (![(SpringBoard *)[%c(SpringBoard) sharedApplication] isLocked] && (orientation == 1 || orientation == 2)) {
     CSContainer.layer.hidden = NO;
     CSSeparator.layer.hidden = NO;
