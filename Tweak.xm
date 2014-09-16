@@ -10,6 +10,7 @@ static BOOL enable(void) {
 static SBControlCenterSectionView *CSContainer;
 static SBControlCenterSeparatorView *CSSeparator;
 static int oldOrientation;
+static CGFloat CCHeight;
 %group CSwitcher
 
 %hook SBAppSliderController
@@ -62,28 +63,23 @@ static int oldOrientation;
   [[CSView sharedView] moveAppToFront:arg1];
 }
 %end
-%hook SpringBoard
-- (void)noteInterfaceOrientationChanged:(long long)arg1 duration:(double)arg2{
-    %orig;
-    [[CSView sharedView] layoutIconsWithIDS:[[CSView sharedView] currentIDS]];
-}
-%end
 %hook SBControlCenterViewController
-- (float)contentHeightForOrientation:(int)orientation {
+- (CGFloat)contentHeightForOrientation:(int)orientation {
   if (![(SpringBoard *)[%c(SpringBoard) sharedApplication] isLocked] && (orientation == 1 || orientation == 2)) {
     CSContainer.layer.hidden = NO;
     CSSeparator.layer.hidden = NO;
-    return %orig+98;
+    CCHeight = %orig+98;
   }
   else if ([(SpringBoard *)[%c(SpringBoard) sharedApplication] isLocked]) {
     CSContainer.layer.hidden = YES;
     CSSeparator.layer.hidden = YES;
-    return %orig;
+    CCHeight = %orig;
   }
   else {
     CSContainer.layer.hidden = NO;
-    return %orig;
+    CCHeight = %orig;
   }
+  return CCHeight;
 }
 %end
 %hook SBControlCenterContentView
@@ -91,9 +87,9 @@ static int oldOrientation;
   %orig;
   int currentOrientation = [(SpringBoard *)[objc_getClass("SpringBoard") sharedApplication] activeInterfaceOrientation];
   if (!CSContainer){
-    CSContainer = [[[%c(SBControlCenterSectionView) alloc] initWithFrame:CGRectMake(0,self.frame.size.height-100,320,98)] autorelease];
+    CSContainer = [[[%c(SBControlCenterSectionView) alloc] initWithFrame:CGRectMake(0,CCHeight-100,320,98)] autorelease];
   }
-  [self addSubview:CSContainer];
+  [self.superview addSubview:CSContainer];
   [CSContainer addSubview:[CSView sharedView]];
   if ([[CSView sharedView] currentIDS] == nil){
       [[CSView sharedView] layoutIconsWithIDS:[[%c(SBAppSliderController) sharedController] _beginAppListAccess]];
@@ -109,7 +105,7 @@ static int oldOrientation;
   if (currentOrientation == 1 || currentOrientation == 2){
   self.quickLaunchSection.view.frame = CGRectMake(self.quickLaunchSection.view.frame.origin.x,self.quickLaunchSection.view.frame.origin.y-3,320,95);
   CSSeparator.layer.hidden = NO;
-  CSContainer.frame = CGRectMake(0,self.frame.size.height-100,320,98);
+  CSContainer.frame = CGRectMake(0,CCHeight-100,320,98);
   CSSeparator.frame = CGRectMake(0,CSContainer.frame.origin.y-4,320,1);
 }
 if (currentOrientation == 3 || currentOrientation == 4){
@@ -126,7 +122,6 @@ if (currentOrientation == 3 || currentOrientation == 4){
   }
 }
 }
-
 - (void)dealloc {
   [CSContainer release];
   CSContainer = nil;

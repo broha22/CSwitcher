@@ -18,6 +18,7 @@
 - (void)stopContainersEditing;
 @property BOOL inEdit;
 @property BOOL snapShots;
+@property BOOL draggingSnapshot;
 @end
 
 

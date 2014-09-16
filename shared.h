@@ -59,7 +59,8 @@
 - (void)presentAnimated:(BOOL)arg1;
 + (id)sharedInstance;
 @end
-
+@interface UICSWindow : UIWindow
+@end
 @interface SBCCButtonLayoutView : UIView
 @end
 @interface SpringBoard : UIApplication
@@ -68,6 +69,7 @@
 - (void)_handleMenuButtonEvent;
 - (BOOL)isLocked;
 - (long long)activeInterfaceOrientation;
+- (UICSWindow *)CSWindow;
 @end
 @interface __NSArrayM : NSMutableArray
 @end

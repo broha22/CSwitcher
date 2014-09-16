@@ -2,12 +2,6 @@
 #import "CSView.h"
 #import "CSIconDelegate.h"
 #import "prefs.h"
-
-static CSView *sharedCSView = nil;
-static NSMutableArray *currentIDS;
-static NSMutableArray *arrayOfSnaps = [[NSMutableArray alloc] init];
-static NSMutableArray *containerViewsArray = [[NSMutableArray alloc] init];
-
 static int iconCount() {
   if (fivecon()) {
     return 5;
@@ -43,7 +37,11 @@ if (!fivecon()){
     return 0;
   }
 }
-
+static CSView *sharedCSView = nil;
+static NSMutableArray *currentIDS;
+static NSMutableArray *arrayOfSnaps = [[NSMutableArray alloc] init];
+static NSMutableArray *containerViewsArray = [[NSMutableArray alloc] init];
+static CSIconDelegate *sharedIconDelegate = [[CSIconDelegate alloc] init];
 
 @implementation CSView
 
@@ -90,7 +88,7 @@ if (!fivecon()){
       SBIconView *view = [[%c(SBIconView) alloc] initWithDefaultSize];
       view.icon = icon;
       view.tag = [IDS indexOfObject:ID];
-      view.delegate = [[CSIconDelegate alloc] init];
+      view.delegate = sharedIconDelegate;
       if (currentOrientation == 1 || currentOrientation == 2) {
 	[view setLabelHidden:NO];
 	view.frame = CGRectMake(calcX([IDS indexOfObject:ID]),16,60,60);
