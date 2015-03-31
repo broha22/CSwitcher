@@ -100,7 +100,11 @@ static CSIconDelegate *sharedIconDelegate = [[CSIconDelegate alloc] init];
       [self addSubview:view];
       if (snaps()) {
 	UIView *containerView = [[UIView alloc] initWithFrame:CGRectMake(calcX([IDS indexOfObject:ID]),0,62,97)];
+<<<<<<< HEAD
 	SBAppSwitcherSnapshotView *snapView = [[%c(SBAppSwitcherSnapshotView) alloc] initWithDisplayItem:nil application:[[%c(SBApplicationController) sharedInstance] applicationWithBundleIdentifier:ID] orientation:[(SpringBoard *)[objc_getClass("SpringBoard") sharedApplication] activeInterfaceOrientation] async:NO withQueue:MSHookIvar<NSObject<OS_dispatch_queue> *>([%c(SBAppSwitcherController) sharedController], "_snapshotQueue") statusBarCache:nil];
+=======
+	SBAppSliderSnapshotView *snapView = [[%c(SBAppSliderSnapshotView) alloc] initWithApplication:[[%c(SBApplicationController) sharedInstance] applicationWithDisplayIdentifier:ID] orientation:[(SpringBoard *)[objc_getClass("SpringBoard") sharedApplication] activeInterfaceOrientation] async:NO withQueue:MSHookIvar<NSObject<OS_dispatch_queue> *>([%c(SBAppSliderController) sharedController], "_snapshotQueue") statusBarCache:nil];
+>>>>>>> cb7d7214b8270405dd160e74854fea27d457ef3e
 	[arrayOfSnaps addObject:snapView];
 	SBAppSwitcherPageView *page = [[%c(SBAppSwitcherPageView) alloc] initWithFrame:CGRectMake(0,0,62,97)];
 	[page setView:snapView animated:NO];
@@ -180,7 +184,11 @@ static CSIconDelegate *sharedIconDelegate = [[CSIconDelegate alloc] init];
 }
 
 - (void)activateAppWithIconView:(UIView *)icon {
+<<<<<<< HEAD
   SBApplication *app = [[%c(SBApplicationController) sharedInstance] applicationWithBundleIdentifier:[currentIDS objectAtIndex:icon.tag]];
+=======
+  SBApplication *app = [[%c(SBApplicationController) sharedInstance] applicationWithDisplayIdentifier:[currentIDS objectAtIndex:icon.tag]];
+>>>>>>> cb7d7214b8270405dd160e74854fea27d457ef3e
   [[%c(SBUIController) sharedInstance] activateApplicationAnimated:app];
 }
 
@@ -262,7 +270,11 @@ static CSIconDelegate *sharedIconDelegate = [[CSIconDelegate alloc] init];
 - (void)cleanUpKill:(UIView *)view {
   [view removeFromSuperview];
   [[%c(SBAppSwitcherModel) sharedInstance] remove:[currentIDS objectAtIndex:view.tag]];
+<<<<<<< HEAD
   SBApplication *app = [[%c(SBApplicationController) sharedInstance] applicationWithBundleIdentifier:[currentIDS objectAtIndex:view.tag]];
+=======
+  SBApplication *app = [[%c(SBApplicationController) sharedInstance] applicationWithDisplayIdentifier:[currentIDS objectAtIndex:view.tag]];
+>>>>>>> cb7d7214b8270405dd160e74854fea27d457ef3e
   system([[NSString stringWithFormat:@"killall %@", [[[app bundle] executablePath] lastPathComponent]] UTF8String]);
   [currentIDS removeObjectAtIndex:view.tag];
 }

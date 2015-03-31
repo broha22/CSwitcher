@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 @interface NSUserDefaults (UFS_Category)
 - (id)objectForKey:(NSString *)key inDomain:(NSString *)domain;
 - (void)setObject:(id)value forKey:(NSString *)key inDomain:(NSString *)domain;
@@ -8,13 +9,21 @@
 - (void)remove:(id)arg1;
 - (id)identifiers;
 - (id)snapshotOfFlattenedArrayOfAppIdentifiersWhichIsOnlyTemporary;
+=======
+@interface SBAppSwitcherModel : NSObject
++ (id)sharedInstance;
+- (void)remove:(id)arg1;
+>>>>>>> cb7d7214b8270405dd160e74854fea27d457ef3e
 @end
 @interface SBControlCenterSectionViewController : UIViewController
 @end
 @interface SBCCQuickLaunchSectionController : UIViewController
 @end
 @interface SBControlCenterSectionView : UIView
+<<<<<<< HEAD
 @property (assign,nonatomic) UIView *leftSection;               //@synthesize leftSection=_leftSection - In the implementation block
+=======
+>>>>>>> cb7d7214b8270405dd160e74854fea27d457ef3e
 @end
 @interface SBControlCenterContentView : UIView
 @property(retain, nonatomic) SBCCQuickLaunchSectionController *quickLaunchSection; // @synthesize quickLaunchSection=_quickLaunchSection;
@@ -35,7 +44,10 @@
 
 @interface SBIcon : NSObject
 - (void)launchFromLocation:(int)arg1;
+<<<<<<< HEAD
 -(id)applicationBundleID;
+=======
+>>>>>>> cb7d7214b8270405dd160e74854fea27d457ef3e
 @end
 
 @interface SBIconView : UIView
@@ -50,6 +62,7 @@
 - (void)_applyIconAccessoryAlpha:(double)arg1;
 @end
 
+<<<<<<< HEAD
 @interface SBAppSwitcherController : NSObject 
 + (id)sharedController;
 - (id)_beginAppListAccess;
@@ -59,6 +72,8 @@
 - (id)_flattenedArrayOfDisplayItemsFromDisplayLayouts:(id)arg1;
 @end
 
+=======
+>>>>>>> cb7d7214b8270405dd160e74854fea27d457ef3e
 @interface SBAppSliderController : NSObject 
 + (id)sharedController;
 - (id)_beginAppListAccess;
@@ -69,7 +84,10 @@
 
 @interface SBUIController : NSObject
 + (id)sharedInstance;
+<<<<<<< HEAD
 - (id)_appSwitcherController;
+=======
+>>>>>>> cb7d7214b8270405dd160e74854fea27d457ef3e
 - (id)_appSliderController;
 - (void)activateApplicationAnimated:(id)arg1;
 @end
@@ -97,6 +115,7 @@
 @end
 @interface SBApplicationController : NSObject
 + (id)sharedInstance;
+<<<<<<< HEAD
 -(id)applicationWithBundleIdentifier:(id)arg1;
 - (id)applicationWithDisplayIdentifier:(id)arg1;
 @end
@@ -114,6 +133,15 @@
 - (id)initWithApplication:(id)app orientation:(int)orientation async:(BOOL)arg withQueue:(id)queue statusBarCache:(id)arg2;
 @end
 
+=======
+- (id)applicationWithDisplayIdentifier:(id)arg1;
+@end
+@interface SBAppSliderSnapshotView : UIView
+- (UIImageView *)_snapshotImage;
+- (struct CGSize)sizeThatFits:(struct CGSize)arg1;
+- (id)initWithApplication:(id)app orientation:(int)orientation async:(BOOL)arg withQueue:(id)queue statusBarCache:(id)arg2;
+@end
+>>>>>>> cb7d7214b8270405dd160e74854fea27d457ef3e
 @interface SBAppSwitcherPageView : UIView
 - (id)initWithFrame:(struct CGRect)arg1;
 - (void)setView:(id)arg1 animated:(_Bool)arg2;
@@ -123,6 +151,7 @@
 @end
 
 @interface SBCloseBoxView : UIButton
+<<<<<<< HEAD
 @end
 @interface SBDisplayLayout : NSObject
 -(id)description;
@@ -132,4 +161,6 @@
 @property (nonatomic,readonly) NSString * type;                           //@synthesize type=_type - In the implementation block
 +(id)displayItemWithType:(NSString*)arg1 displayIdentifier:(id)arg2 ;
 
+=======
+>>>>>>> cb7d7214b8270405dd160e74854fea27d457ef3e
 @end

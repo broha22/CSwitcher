@@ -49,12 +49,20 @@ UIColor *oldTintColor;
 }
 - (void)viewWillAppear:(BOOL)animated {
   [super viewWillAppear:animated];
+<<<<<<< HEAD
   [[UIApplication sharedApplication] keyWindow].tintColor = [UIColor colorWithRed:146.f/255.f green:34.f/255.f blue:1 alpha:1];
 }
 - (void)viewWillDisappear:(BOOL)animated {
   [super viewWillDisappear:animated];
     [[UIApplication sharedApplication] keyWindow].tintColor = nil;
 
+=======
+  self.navigationController.navigationBar.tintColor = [UIColor colorWithRed:146.f/255.f green:34.f/255.f blue:1 alpha:1];
+}
+- (void)viewWillDisappear:(BOOL)animated {
+  [super viewWillDisappear:animated];
+  self.navigationController.navigationBar.tintColor = nil;
+>>>>>>> cb7d7214b8270405dd160e74854fea27d457ef3e
 }
 - (void)apply {
   system("killall SpringBoard");
@@ -96,14 +104,26 @@ UIColor *oldTintColor;
 - (id)initWithStyle:(int)arg1 reuseIdentifier:(id)arg2 specifier:(id)arg3{
     self = [super initWithStyle:arg1 reuseIdentifier:arg2 specifier:arg3];
     if (self) {
+<<<<<<< HEAD
+=======
+        [((UISwitch *)[self newControl]) setOnTintColor:[UIColor colorWithRed:146.f/255.f green:34.f/255.f blue:1 alpha:1]];
+>>>>>>> cb7d7214b8270405dd160e74854fea27d457ef3e
     }
     return self;
 }
 - (void)layoutSubviews {
   [super layoutSubviews];
+<<<<<<< HEAD
   ((UITableViewCell *)self).accessoryView.tintColor = [UIColor colorWithRed:146.f/255.f green:34.f/255.f blue:1 alpha:1];
   ((UISwitch *)((UITableViewCell *)self).accessoryView).onTintColor = [UIColor colorWithRed:146.f/255.f green:34.f/255.f blue:1 alpha:1];
 
+=======
+  for (UIView *view in ((UIView *)[self.subviews firstObject]).subviews) {
+    if ([view class] == [UISwitch class]) {
+      [((UISwitch *)view) setOnTintColor:[UIColor colorWithRed:146.f/255.f green:34.f/255.f blue:1 alpha:1]];
+    }
+  }
+>>>>>>> cb7d7214b8270405dd160e74854fea27d457ef3e
 }
 @end
 
@@ -119,7 +139,11 @@ UIColor *oldTintColor;
 }
 - (void)layoutSubviews {
      [super layoutSubviews];
+<<<<<<< HEAD
      ((UITableViewCell *)self).textLabel.textColor = [UIColor colorWithRed:146.f/255.f green:34.f/255.f blue:1 alpha:1];
+=======
+     ((UILabel *)[((UIView *)[((UIView *)[self.subviews firstObject]).subviews firstObject]).subviews firstObject]).textColor = [UIColor colorWithRed:146.f/255.f green:34.f/255.f blue:1 alpha:1];
+>>>>>>> cb7d7214b8270405dd160e74854fea27d457ef3e
   }
 
 @end
