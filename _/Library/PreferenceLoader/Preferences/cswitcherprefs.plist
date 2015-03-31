@@ -1,0 +1,10 @@
+{
+    entry = {
+	bundle = cswitcherprefs;
+	cell = PSLinkCell;
+	detail = cswitcherprefsListController;
+	icon = CSwitcher-Icon.png;
+	isController = 1;
+	label = CSwitcher;
+    };
+}

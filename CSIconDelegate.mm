@@ -1,0 +1,2 @@
+@implementation CSIconDelegate
+@end
