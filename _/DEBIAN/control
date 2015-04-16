@@ -1,0 +1,10 @@
+Package: com.twodayslate.cswitcher
+Name: CSwitcher
+Depends: mobilesubstrate
+Architecture: iphoneos-arm
+Description: An awesome MobileSubstrate tweak!
+Maintainer: twodayslate
+Author: twodayslate
+Section: Tweaks
+Version: 0.0.1-3
+Installed-Size: 88
