@@ -1,37 +1,53 @@
 #import "headers.h"
+#define DEVICE_WIDTH [UIScreen mainScreen].bounds.size.width
+/*
+ios 9 only, old code commented out
+*/
 
 %hook SBAppSwitcherModel
 -(void)appsRemoved:(id)arg1 added:(id)arg2 {
 	%orig;
-	[CSwitcherController sharedInstance].recentApplications = [[[self snapshotOfFlattenedArrayOfAppIdentifiersWhichIsOnlyTemporary] mutableCopy] retain];
+	[CSwitcherController sharedInstance].recentApplications = [self mainSwitcherDisplayItems];
+	//[CSwitcherController sharedInstance].recentApplications = [[[self snapshotOfFlattenedArrayOfAppIdentifiersWhichIsOnlyTemporary] mutableCopy] retain];
 }
 
 -(void)remove:(id)arg1 {
 	%orig;
-	[CSwitcherController sharedInstance].recentApplications = [[[self snapshotOfFlattenedArrayOfAppIdentifiersWhichIsOnlyTemporary] mutableCopy] retain];
+	[CSwitcherController sharedInstance].recentApplications = [self mainSwitcherDisplayItems];
+	//[CSwitcherController sharedInstance].recentApplications = [[[self snapshotOfFlattenedArrayOfAppIdentifiersWhichIsOnlyTemporary] mutableCopy] retain];
 }
 
 -(void)removeDisplayItem:(id)arg1 {
 	%orig;
-	[CSwitcherController sharedInstance].recentApplications = [[[self snapshotOfFlattenedArrayOfAppIdentifiersWhichIsOnlyTemporary] mutableCopy] retain];
+	[CSwitcherController sharedInstance].recentApplications = [self mainSwitcherDisplayItems];
+	//[CSwitcherController sharedInstance].recentApplications = [[[self snapshotOfFlattenedArrayOfAppIdentifiersWhichIsOnlyTemporary] mutableCopy] retain];
 }
 
 -(void)addToFront:(id)arg1 {
 	%orig;
-	[CSwitcherController sharedInstance].recentApplications = [[[self snapshotOfFlattenedArrayOfAppIdentifiersWhichIsOnlyTemporary] mutableCopy] retain];
+	[CSwitcherController sharedInstance].recentApplications = [self mainSwitcherDisplayItems];
+	//[CSwitcherController sharedInstance].recentApplications = [[[self snapshotOfFlattenedArrayOfAppIdentifiersWhichIsOnlyTemporary] mutableCopy] retain];
 }
 %end
 
-
-
-
 @implementation CSwitcherCell
--(id)initWithFrame:(CGRect)frame {
+- (id)initWithFrame:(CGRect)frame {
 	self = [super initWithFrame:frame];
 	if(self) {
-		// setup view with icon and snapshot
+		[self addSubview: self.iconView];
+		//self.backgroundColor = [UIColor redColor];
 	}
 	return self;
+}
+- (void)prepareForReuse {
+    [super prepareForReuse];
+    for (UIView *view in self.subviews) {
+    	[view removeFromSuperview];
+    }
+}
+- (void)layoutSubviews {
+	[super layoutSubviews];
+	[self addSubview: self.iconView];
 }
 @end
 
@@ -45,15 +61,31 @@
     });
     return sharedInstance;
 }
-
+- (CGFloat)newHeightFromOld:(CGFloat)oldHeight orientation:(NSInteger)orientation {
+	self.controlHeight = oldHeight;
+	return oldHeight;
+}
+- (void)setRecentApps:(NSMutableArray *)arg {
+	_recentApplications = [arg retain];
+	[self.collectionView reloadData];
+}
 - (void)viewDidLoad {
-    [super viewDidLoad];
-    self.recentApplications = [[[(SBAppSwitcherModel *)[%c(SBAppSwitcherModel) sharedInstance] snapshotOfFlattenedArrayOfAppIdentifiersWhichIsOnlyTemporary] mutableCopy] retain];
-    [self.collectionView registerClass:[CSwitcherCell class] forCellWithReuseIdentifier:@"CellView"];
-    UICollectionViewFlowLayout *flowLayout = [[%c(CSwitcherFlowLayout) alloc] init];
-    [flowLayout setItemSize:CGSizeMake(200, 200)];
+    [super viewDidLoad];    
+    [self.collectionView release];
+    self.view.frame = CGRectMake(0,self.controlHeight-100,DEVICE_WIDTH,98);
+    self.recentApplications = [(SBAppSwitcherModel *)[%c(SBAppSwitcherModel) sharedInstance] mainSwitcherDisplayItems];
+    
+    UICollectionViewFlowLayout *flowLayout = [[UICollectionViewFlowLayout alloc] init];
+    [flowLayout setItemSize:[%c(SBIconView) defaultIconSize]];
     [flowLayout setScrollDirection:UICollectionViewScrollDirectionHorizontal];
-    [self.collectionView setCollectionViewLayout:flowLayout];
+
+    self.collectionView = [[UICollectionView alloc] initWithFrame:CGRectMake(0,0,self.view.frame.size.width,self.view.frame.size.height) collectionViewLayout:flowLayout];
+    self.collectionView.delegate = self;
+    self.collectionView.dataSource = self;
+    self.collectionView.backgroundColor = UIColor.clearColor;
+    [self.collectionView registerClass:[CSwitcherCell class] forCellWithReuseIdentifier:@"CellView"];
+
+    [self.view addSubview:self.collectionView];
 }
 
 -(NSInteger)numberOfSectionsInCollectionView:(UICollectionView *)collectionView {
@@ -66,19 +98,20 @@
 
 -(UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath {
 	CSwitcherCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"CellView" forIndexPath:indexPath];
-	
-	NSString *identifier = [self.recentApplications objectAtIndex:indexPath.section];
+	NSLog(@"CSwitcher - %@",indexPath);
+	NSString *identifier = ((SBDisplayItem *)[self.recentApplications objectAtIndex:indexPath.row]).displayIdentifier;
 
 	SBApplicationController *appController = [%c(SBApplicationController) sharedInstanceIfExists];
 	SBApplication *app = [appController applicationWithBundleIdentifier:identifier];
 	SBApplicationIcon *appIcon = [[%c(SBApplicationIcon) alloc] initWithApplication:app];
-	SBIconView *iconView = [[%c(SBIconView) alloc] initWithDefaultSize];
+	SBIconView *iconView = [%c(SBIconView) new];
+	iconView.frame = CGRectMake(0,0,[%c(SBIconView) defaultIconSize].width,[%c(SBIconView) defaultIconSize].height);
 	iconView.icon = appIcon;
 	iconView.delegate = [%c(SBIconController) sharedInstance];
 	cell.iconView = iconView;
 
-	SBAppSwitcherSnapshotView *snapshot = [[%c(SBAppSwitcherSnapshotView) alloc] initWithDisplayItem:nil application:app orientation:[(SpringBoard *)[objc_getClass("SpringBoard") sharedApplication] activeInterfaceOrientation] async:NO withQueue:MSHookIvar<NSObject *>([%c(SBAppSwitcherController) sharedController], "_snapshotQueue") statusBarCache:nil];
-	cell.snapshot = snapshot;
+	//SBAppSwitcherSnapshotView *snapshot = [[%c(SBAppSwitcherSnapshotView) alloc] initWithDisplayItem:nil application:app orientation:[(SpringBoard *)[objc_getClass("SpringBoard") sharedApplication] activeInterfaceOrientation] async:NO withQueue:MSHookIvar<NSObject *>([%c(SBAppSwitcherController) sharedController], "_snapshotQueue") statusBarCache:nil];
+	//cell.snapshot = snapshot;
 
 	return cell;
 }
@@ -88,25 +121,23 @@
 
 %hook SBControlCenterContentView
 -(void)layoutSubviews {
-	[self _addSectionController:[CSwitcherController sharedInstance]];
+	//[self contentHeightForOrientation:[[UIDevice currentDevice] orientation]];
 	%orig;
+	[self _addSectionController:[CSwitcherController sharedInstance]];
+	
 }
 -(void)_addSectionController:(id)arg1 {
-	%log;
-	%orig;
+	if (![arg1 isKindOfClass:[%c(SBCCQuickLaunchSectionController) class]]) {
+		%orig();
+		
+	}
+	
+}
+- (double)contentHeightForOrientation:(long long)arg1 {
+	return [[CSwitcherController sharedInstance] newHeightFromOld:%orig orientation:arg1];
 }
 %end
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+%ctor {
+	NSLog(@"CSwitcher loaded");
+}

@@ -6,13 +6,18 @@
 
 @interface CSwitcherController : UIViewController <UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout>
 @property (nonatomic, strong) UICollectionView *collectionView;
-@property (nonatomic, strong) NSMutableArray *recentApplications;
+@property (nonatomic, strong, setter=setRecentApps:) NSMutableArray *recentApplications;
+@property CGFloat controlHeight;
 +(CSwitcherController *)sharedInstance;
+- (CGFloat)newHeightFromOld:(CGFloat)oldHeight orientation:(NSInteger)orientation;
+- (void)setRecentApps:(NSMutableArray *)arg;
 @end
 
 @interface SBAppSwitcherModel : NSObject
 +(SBAppSwitcherModel *) sharedInstance;
 -(id)snapshotOfFlattenedArrayOfAppIdentifiersWhichIsOnlyTemporary;
+//iOS 9
+- (id)mainSwitcherDisplayItems;
 @end
 
 @interface SBAppSwitcherController
@@ -42,6 +47,7 @@
 @property (assign,nonatomic) id delegate;
 @property (nonatomic,retain) SBIcon * icon;
 -(id)initWithDefaultSize;
++ (CGSize)defaultIconSize;
 @end
 
 @interface SpringBoard
@@ -50,8 +56,12 @@
 
 @interface SBControlCenterContentView
 -(void)_addSectionController:(id)arg1 ;
+- (double)contentHeightForOrientation:(long long)arg1;
 @end
 
+@interface SBDisplayItem
+@property (nonatomic, assign) NSString *displayIdentifier;
+@end
 
 @interface CSwitcherCell : UICollectionViewCell
 @property (nonatomic, strong) SBIconView *iconView;

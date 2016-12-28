@@ -6,3 +6,5 @@ theos
 _
 obj
 debs
+*.deb
+packages
