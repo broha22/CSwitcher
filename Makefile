@@ -1,19 +1,17 @@
-include theos/makefiles/common.mk
-export ARCHS = armv7 armv7s arm64
-export SDKVERSION = 7.1
-expot DEBUG = 1
-TWEAK_NAME = CSwitcher
+THEOS_DEVICE_IP = 127.0.0.1
+THEOS_DEVICE_PORT = 2222
 
-<<<<<<< HEAD
-CSwitcher_FILES = Tweak.xm CSView-New.xm CSIconDelegate.xm CSContainer.xm
-=======
-CSwitcher_FILES = Tweak.xm CSView.xm CSIconDelegate.xm
->>>>>>> cb7d7214b8270405dd160e74854fea27d457ef3e
-CSwitcher_FRAMEWORKS = Foundation UIKit CoreGraphics CoreImage QuartzCore
+THEOS_PACKAGE_DIR_NAME = debs
+TARGET := iphone:clang
+ARCHS := armv7 arm64
+
+include theos/makefiles/common.mk
+
+TWEAK_NAME = CSwitcher
+CSwitcher_FILES = Tweak.xm
+CSwitcher_FRAMEWORKS = UIKit QuartzCore CoreGraphics
 
 include $(THEOS_MAKE_PATH)/tweak.mk
 
 after-install::
 	install.exec "killall -9 SpringBoard"
-SUBPROJECTS += cswitcherprefs
-include $(THEOS_MAKE_PATH)/aggregate.mk

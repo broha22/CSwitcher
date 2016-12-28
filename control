@@ -1,13 +1,9 @@
 Package: com.broganminer.cswitcher
 Name: CSwitcher
 Depends: mobilesubstrate
-<<<<<<< HEAD
-Version: 2.0.0
-=======
-Version: 1.0.2
->>>>>>> cb7d7214b8270405dd160e74854fea27d457ef3e
+Version: 0.0.1
 Architecture: iphoneos-arm
-Description: Move your App Switcher into your Control Center
-Maintainer: Brogan Miner
-Author: Brogan Miner
+Description: An awesome MobileSubstrate tweak!
+Maintainer: twodayslate
+Author: twodayslate
 Section: Tweaks
