@@ -11,6 +11,7 @@
 +(CSwitcherController *)sharedInstance;
 - (CGFloat)newHeightFromOld:(CGFloat)oldHeight orientation:(NSInteger)orientation;
 - (void)setRecentApps:(NSMutableArray *)arg;
+- (id)displayItemForCell:(id)cell;
 @end
 
 @interface SBAppSwitcherModel : NSObject
@@ -18,6 +19,7 @@
 -(id)snapshotOfFlattenedArrayOfAppIdentifiersWhichIsOnlyTemporary;
 //iOS 9
 - (id)mainSwitcherDisplayItems;
+-(void)remove:(id)arg1;
 @end
 
 @interface SBAppSwitcherController
@@ -63,8 +65,9 @@
 @property (nonatomic, assign) NSString *displayIdentifier;
 @end
 
-@interface CSwitcherCell : UICollectionViewCell
+@interface CSwitcherCell : UICollectionViewCell <UIScrollViewDelegate>
 @property (nonatomic, strong) SBIconView *iconView;
 @property (nonatomic, strong) SBAppSwitcherSnapshotView *snapshot;
+@property (nonatomic, strong) UIScrollView *scrollview;
 @end
 

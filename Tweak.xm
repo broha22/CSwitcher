@@ -34,20 +34,52 @@ ios 9 only, old code commented out
 - (id)initWithFrame:(CGRect)frame {
 	self = [super initWithFrame:frame];
 	if(self) {
-		[self addSubview: self.iconView];
+		self.scrollview = [[UIScrollView alloc] initWithFrame:CGRectMake(0,0,frame.size.width, frame.size.height)];
+		self.scrollview.contentSize = CGSizeMake(frame.size.width,frame.size.height+50);
+		self.scrollview.showsVerticalScrollIndicator = false;
+		self.scrollview.delegate = self;
 		//self.backgroundColor = [UIColor redColor];
 	}
 	return self;
 }
 - (void)prepareForReuse {
     [super prepareForReuse];
-    for (UIView *view in self.subviews) {
+    for (UIView *view in self.scrollview.subviews) {
     	[view removeFromSuperview];
     }
+    [self.scrollview removeFromSuperview];
+    self.scrollview.contentOffset = CGPointMake(0,0);
 }
 - (void)layoutSubviews {
 	[super layoutSubviews];
-	[self addSubview: self.iconView];
+	[self addSubview:self.scrollview];
+	[self.scrollview addSubview: self.iconView];
+}
+- (void)scrollViewDidScroll:(UIScrollView *)scrollView {
+	if (scrollView.contentOffset.y > 20) {
+		UICollectionView *collectionView = (UICollectionView *)self.superview;
+		NSInteger start = [collectionView.visibleCells indexOfObject:self] + 1;
+		NSInteger end = [collectionView.visibleCells count];
+		[UIView animateWithDuration:0.25f delay:0.0f options:UIViewAnimationCurveEaseIn
+        	animations:^{
+        		NSInteger p = 0;
+			     while (start + p < end) {
+			     	UIView *view = [collectionView.visibleCells objectAtIndex:start];
+			     	CGRect f = view.frame;
+			     	f.origin.x -= view.frame.size.width;
+			     	view.frame = f;
+			     	p++;
+			     }
+          	}
+            completion:^(BOOL finnished){
+				[(SBAppSwitcherModel *)[%c(SBAppSwitcherModel) sharedInstance] remove:[[%c(CSwitcherController) sharedInstance] displayItemForCell:self]];
+        	}
+        ];
+		
+	}
+	else {
+		scrollView.contentOffset = CGPointMake(0,0);
+	}
 }
 @end
 
@@ -84,6 +116,7 @@ ios 9 only, old code commented out
     self.collectionView.dataSource = self;
     self.collectionView.backgroundColor = UIColor.clearColor;
     [self.collectionView registerClass:[CSwitcherCell class] forCellWithReuseIdentifier:@"CellView"];
+    self.collectionView.showsHorizontalScrollIndicator = false;
 
     [self.view addSubview:self.collectionView];
 }
@@ -115,7 +148,10 @@ ios 9 only, old code commented out
 
 	return cell;
 }
-
+- (id)displayItemForCell:(id)cell {
+	NSIndexPath *path = [self.collectionView indexPathForCell:cell];
+	return [self.recentApplications objectAtIndex:path.row];
+}
 @end
 
 
