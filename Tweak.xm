@@ -38,7 +38,6 @@ ios 9 only, old code commented out
 		self.scrollview.contentSize = CGSizeMake(frame.size.width,frame.size.height+50);
 		self.scrollview.showsVerticalScrollIndicator = false;
 		self.scrollview.delegate = self;
-		//self.backgroundColor = [UIColor redColor];
 	}
 	return self;
 }
@@ -57,28 +56,19 @@ ios 9 only, old code commented out
 }
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView {
 	if (scrollView.contentOffset.y > 20) {
-		UICollectionView *collectionView = (UICollectionView *)self.superview;
-		NSInteger start = [collectionView.visibleCells indexOfObject:self] + 1;
-		NSInteger end = [collectionView.visibleCells count];
-		[UIView animateWithDuration:0.25f delay:0.0f options:UIViewAnimationCurveEaseIn
-        	animations:^{
-        		NSInteger p = 0;
-			     while (start + p < end) {
-			     	UIView *view = [collectionView.visibleCells objectAtIndex:start];
-			     	CGRect f = view.frame;
-			     	f.origin.x -= view.frame.size.width;
-			     	view.frame = f;
-			     	p++;
-			     }
-          	}
-            completion:^(BOOL finnished){
-				[(SBAppSwitcherModel *)[%c(SBAppSwitcherModel) sharedInstance] remove:[[%c(CSwitcherController) sharedInstance] displayItemForCell:self]];
-        	}
-        ];
-		
+		UICollectionView *collectionView = [%c(CSwitcherController) sharedInstance].collectionView;
+		NSIndexPath *path = [collectionView indexPathForCell:self];
+		if (path) {
+			[[%c(CSwitcherController) sharedInstance].recentApplications removeObject:[[%c(CSwitcherController) sharedInstance] displayItemForCell:self]];
+			[collectionView deleteItemsAtIndexPaths:@[path]];
+		}
 	}
 	else {
-		scrollView.contentOffset = CGPointMake(0,0);
+		[UIView animateWithDuration:0.25f delay:0.1f options:UIViewAnimationCurveEaseIn
+        		animations:^{
+					scrollView.contentOffset = CGPointMake(0,0);
+				}
+		completion:nil];
 	}
 }
 @end
@@ -98,7 +88,7 @@ ios 9 only, old code commented out
 	return oldHeight;
 }
 - (void)setRecentApps:(NSMutableArray *)arg {
-	_recentApplications = [arg retain];
+	_recentApplications = [arg mutableCopy];
 	[self.collectionView reloadData];
 }
 - (void)viewDidLoad {
