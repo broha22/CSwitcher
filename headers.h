@@ -13,13 +13,15 @@
 - (void)setRecentApps:(NSMutableArray *)arg;
 - (id)displayItemForCell:(id)cell;
 @end
-
+@interface UIApplication (cs)
+- (bool)launchApplicationWithIdentifier:(id)arg1 suspended:(bool)arg2;
+@end
 @interface SBAppSwitcherModel : NSObject
 +(SBAppSwitcherModel *) sharedInstance;
 -(id)snapshotOfFlattenedArrayOfAppIdentifiersWhichIsOnlyTemporary;
 //iOS 9
 - (id)mainSwitcherDisplayItems;
--(void)remove:(id)arg1;
+-(void)_saveRecents;
 @end
 
 @interface SBAppSwitcherController
@@ -33,12 +35,16 @@
 @interface SBApplicationController : NSObject
 +(SBApplicationController *)sharedInstanceIfExists;
 -(id)applicationWithBundleIdentifier:(id)arg1 ;
++ (id)sharedInstance;
+
 @end
 
 @interface SBApplication : NSObject
+- (id)bundleIdentifier;
 @end
 
 @interface SBIcon : NSObject
+- (id)applicationBundleID;
 @end
 
 @interface SBApplicationIcon : SBIcon
@@ -48,8 +54,12 @@
 @interface SBIconView : UIView
 @property (assign,nonatomic) id delegate;
 @property (nonatomic,retain) SBIcon * icon;
--(id)initWithDefaultSize;
+- (id)initWithDefaultSize;
+- (id)initWithContentType:(NSUInteger)arg;
 + (CGSize)defaultIconSize;
+- (void)setHighlighted:(BOOL)arg1;
+- (id)labelView;
++ (CGSize)defaultIconImageSize;
 @end
 
 @interface SpringBoard

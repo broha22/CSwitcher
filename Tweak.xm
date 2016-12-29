@@ -8,25 +8,25 @@ ios 9 only, old code commented out
 -(void)appsRemoved:(id)arg1 added:(id)arg2 {
 	%orig;
 	[CSwitcherController sharedInstance].recentApplications = [self mainSwitcherDisplayItems];
-	//[CSwitcherController sharedInstance].recentApplications = [[[self snapshotOfFlattenedArrayOfAppIdentifiersWhichIsOnlyTemporary] mutableCopy] retain];
 }
 
 -(void)remove:(id)arg1 {
 	%orig;
 	[CSwitcherController sharedInstance].recentApplications = [self mainSwitcherDisplayItems];
-	//[CSwitcherController sharedInstance].recentApplications = [[[self snapshotOfFlattenedArrayOfAppIdentifiersWhichIsOnlyTemporary] mutableCopy] retain];
 }
 
 -(void)removeDisplayItem:(id)arg1 {
 	%orig;
 	[CSwitcherController sharedInstance].recentApplications = [self mainSwitcherDisplayItems];
-	//[CSwitcherController sharedInstance].recentApplications = [[[self snapshotOfFlattenedArrayOfAppIdentifiersWhichIsOnlyTemporary] mutableCopy] retain];
 }
 
 -(void)addToFront:(id)arg1 {
 	%orig;
 	[CSwitcherController sharedInstance].recentApplications = [self mainSwitcherDisplayItems];
-	//[CSwitcherController sharedInstance].recentApplications = [[[self snapshotOfFlattenedArrayOfAppIdentifiersWhichIsOnlyTemporary] mutableCopy] retain];
+}
+- (void)addToFront:(id)arg1 role:(NSInteger)arg2 {
+	%orig;
+	[CSwitcherController sharedInstance].recentApplications = [self mainSwitcherDisplayItems];
 }
 %end
 
@@ -36,6 +36,7 @@ ios 9 only, old code commented out
 	if(self) {
 		self.scrollview = [[UIScrollView alloc] initWithFrame:CGRectMake(0,0,frame.size.width, frame.size.height)];
 		self.scrollview.contentSize = CGSizeMake(frame.size.width,frame.size.height+50);
+		self.scrollview.clipsToBounds = false;
 		self.scrollview.showsVerticalScrollIndicator = false;
 		self.scrollview.delegate = self;
 	}
@@ -56,11 +57,16 @@ ios 9 only, old code commented out
 }
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView {
 	if (scrollView.contentOffset.y > 20) {
-		UICollectionView *collectionView = [%c(CSwitcherController) sharedInstance].collectionView;
+		UICollectionView *collectionView = ((CSwitcherController *)[%c(CSwitcherController) sharedInstance]).collectionView;
 		NSIndexPath *path = [collectionView indexPathForCell:self];
 		if (path) {
-			[[%c(CSwitcherController) sharedInstance].recentApplications removeObject:[[%c(CSwitcherController) sharedInstance] displayItemForCell:self]];
+			[((CSwitcherController *)[%c(CSwitcherController) sharedInstance]).recentApplications removeObject:[[%c(CSwitcherController) sharedInstance] displayItemForCell:self]];
 			[collectionView deleteItemsAtIndexPaths:@[path]];
+			NSMutableArray *recentApps = MSHookIvar<NSMutableArray *>([%c(SBAppSwitcherModel) sharedInstance], "_recentDisplayItems");
+			[recentApps removeObjectAtIndex:path.row];
+
+			[(SBAppSwitcherModel *)[%c(SBAppSwitcherModel) sharedInstance] _saveRecents];
+
 		}
 	}
 	else {
@@ -107,6 +113,8 @@ ios 9 only, old code commented out
     self.collectionView.backgroundColor = UIColor.clearColor;
     [self.collectionView registerClass:[CSwitcherCell class] forCellWithReuseIdentifier:@"CellView"];
     self.collectionView.showsHorizontalScrollIndicator = false;
+    self.collectionView.pagingEnabled = true;
+    flowLayout.sectionInset = UIEdgeInsetsMake(0, 5, 2, 5);
 
     [self.view addSubview:self.collectionView];
 }
@@ -127,10 +135,16 @@ ios 9 only, old code commented out
 	SBApplicationController *appController = [%c(SBApplicationController) sharedInstanceIfExists];
 	SBApplication *app = [appController applicationWithBundleIdentifier:identifier];
 	SBApplicationIcon *appIcon = [[%c(SBApplicationIcon) alloc] initWithApplication:app];
-	SBIconView *iconView = [%c(SBIconView) new];
-	iconView.frame = CGRectMake(0,0,[%c(SBIconView) defaultIconSize].width,[%c(SBIconView) defaultIconSize].height);
+	SBIconView *iconView = [[%c(SBIconView) alloc] initWithContentType:0];
+	//iconView.frame = CGRectMake(0,0,[%c(SBIconView) defaultIconSize].width,[%c(SBIconView) defaultIconSize].height);
+	//CGRect labelFrame = ((UIView *)[iconView labelView]).frame;
+	//labelFrame.origin.y += [[iconView class] defaultIconImageSize].height;
+	//((UIView *)[iconView labelView]).frame = labelFrame;
 	iconView.icon = appIcon;
 	iconView.delegate = [%c(SBIconController) sharedInstance];
+
+	//Note I should change this at some point but for now it will work
+	iconView.tag = 101;
 	cell.iconView = iconView;
 
 	//SBAppSwitcherSnapshotView *snapshot = [[%c(SBAppSwitcherSnapshotView) alloc] initWithDisplayItem:nil application:app orientation:[(SpringBoard *)[objc_getClass("SpringBoard") sharedApplication] activeInterfaceOrientation] async:NO withQueue:MSHookIvar<NSObject *>([%c(SBAppSwitcherController) sharedController], "_snapshotQueue") statusBarCache:nil];
@@ -161,6 +175,20 @@ ios 9 only, old code commented out
 }
 - (double)contentHeightForOrientation:(long long)arg1 {
 	return [[CSwitcherController sharedInstance] newHeightFromOld:%orig orientation:arg1];
+}
+%end
+
+%hook SBIconController
+- (void)iconTapped:(id)arg1 {
+	SBIconView *iconView = arg1;
+	if (iconView.tag == 101) {
+			[iconView setHighlighted:NO];
+			SBApplication *app = [(SBApplicationController *)[%c(SBApplicationController) sharedInstance] applicationWithBundleIdentifier:[iconView.icon applicationBundleID]];
+			[[UIApplication sharedApplication] launchApplicationWithIdentifier:[app bundleIdentifier] suspended:NO];
+	}
+	else {
+		%orig;
+	}
 }
 %end
 
