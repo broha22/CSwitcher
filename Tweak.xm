@@ -1,5 +1,7 @@
 #import "headers.h"
 #define DEVICE_WIDTH [UIScreen mainScreen].bounds.size.width
+#define ICON_COUNT 4
+#define ICON_INSET 10
 /*
 ios 9 only, old code commented out
 */
@@ -29,7 +31,24 @@ ios 9 only, old code commented out
 	[CSwitcherController sharedInstance].recentApplications = [self mainSwitcherDisplayItems];
 }
 %end
-
+@implementation CSwitcherFlowLayout
+- (NSArray *)layoutAttributesForElementsInRect:(CGRect)rect {
+	NSArray *attributes = [super layoutAttributesForElementsInRect:rect];
+	CGFloat defaultsize = [%c(SBIconView) defaultIconSize].width;
+	for (UICollectionViewLayoutAttributes *attr in attributes) {
+		NSInteger index = [attributes indexOfObject:attr];
+		CGFloat evenSpace = (((float)(DEVICE_WIDTH-(ICON_INSET*2))/(float)ICON_COUNT));
+		NSInteger secNum = ((int)index/(int)ICON_COUNT);
+		CGFloat newX = evenSpace*(index%ICON_COUNT)+ICON_INSET+(DEVICE_WIDTH*secNum)+(evenSpace-defaultsize)/2;
+		attr.frame = CGRectMake(newX,attr.frame.origin.y,attr.frame.size.width,attr.frame.size.height);
+	}
+	return attributes;
+}
+- (CGSize)collectionViewContentSize {
+	CGSize normal = [super collectionViewContentSize];
+	return CGSizeMake(ceil((float)[[CSwitcherController sharedInstance].recentApplications count]/(float)ICON_COUNT)*DEVICE_WIDTH,normal.height);
+}
+@end
 @implementation CSwitcherCell
 - (id)initWithFrame:(CGRect)frame {
 	self = [super initWithFrame:frame];
@@ -103,7 +122,7 @@ ios 9 only, old code commented out
     self.view.frame = CGRectMake(0,self.controlHeight-100,DEVICE_WIDTH,98);
     self.recentApplications = [(SBAppSwitcherModel *)[%c(SBAppSwitcherModel) sharedInstance] mainSwitcherDisplayItems];
     
-    UICollectionViewFlowLayout *flowLayout = [[UICollectionViewFlowLayout alloc] init];
+    CSwitcherFlowLayout *flowLayout = [[CSwitcherFlowLayout alloc] init];
     [flowLayout setItemSize:[%c(SBIconView) defaultIconSize]];
     [flowLayout setScrollDirection:UICollectionViewScrollDirectionHorizontal];
 
