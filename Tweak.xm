@@ -1,7 +1,10 @@
 #import "headers.h"
 #define DEVICE_WIDTH [UIScreen mainScreen].bounds.size.width
+#define DEVICE_HEIGHT [UIScreen mainScreen].bounds.size.height
 #define ICON_COUNT 4
 #define ICON_INSET 10
+#define PAGING_ENABLED true
+#define SNAPSHOTS_ENABLED true
 /*
 ios 9 only, old code commented out
 */
@@ -34,19 +37,21 @@ ios 9 only, old code commented out
 @implementation CSwitcherFlowLayout
 - (NSArray *)layoutAttributesForElementsInRect:(CGRect)rect {
 	NSArray *attributes = [super layoutAttributesForElementsInRect:rect];
-	CGFloat defaultsize = [%c(SBIconView) defaultIconSize].width;
-	for (UICollectionViewLayoutAttributes *attr in attributes) {
-		NSInteger index = [attributes indexOfObject:attr];
-		CGFloat evenSpace = (((float)(DEVICE_WIDTH-(ICON_INSET*2))/(float)ICON_COUNT));
-		NSInteger secNum = ((int)index/(int)ICON_COUNT);
-		CGFloat newX = evenSpace*(index%ICON_COUNT)+ICON_INSET+(DEVICE_WIDTH*secNum)+(evenSpace-defaultsize)/2;
-		attr.frame = CGRectMake(newX,attr.frame.origin.y,attr.frame.size.width,attr.frame.size.height);
+	if (PAGING_ENABLED) {
+		CGFloat defaultsize = [%c(SBIconView) defaultIconSize].width;
+		for (UICollectionViewLayoutAttributes *attr in attributes) {
+			NSInteger index = [attributes indexOfObject:attr];
+			CGFloat evenSpace = (((float)(DEVICE_WIDTH-(ICON_INSET*2))/(float)ICON_COUNT));
+			NSInteger secNum = ((int)index/(int)ICON_COUNT);
+			CGFloat newX = evenSpace*(index%ICON_COUNT)+ICON_INSET+(DEVICE_WIDTH*secNum)+(evenSpace-defaultsize)/2;
+			attr.frame = CGRectMake(newX,attr.frame.origin.y,attr.frame.size.width,attr.frame.size.height);
+		}
 	}
 	return attributes;
 }
 - (CGSize)collectionViewContentSize {
 	CGSize normal = [super collectionViewContentSize];
-	return CGSizeMake(ceil((float)[[CSwitcherController sharedInstance].recentApplications count]/(float)ICON_COUNT)*DEVICE_WIDTH,normal.height);
+	return (PAGING_ENABLED)?CGSizeMake(ceil((float)[[CSwitcherController sharedInstance].recentApplications count]/(float)ICON_COUNT)*DEVICE_WIDTH,normal.height):normal;
 }
 @end
 @implementation CSwitcherCell
@@ -58,6 +63,7 @@ ios 9 only, old code commented out
 		self.scrollview.clipsToBounds = false;
 		self.scrollview.showsVerticalScrollIndicator = false;
 		self.scrollview.delegate = self;
+		self.snapshotView = [[UIImageView alloc] initWithFrame:CGRectMake(0,0,frame.size.width, DEVICE_HEIGHT*(frame.size.width/DEVICE_WIDTH))];
 	}
 	return self;
 }
@@ -67,12 +73,22 @@ ios 9 only, old code commented out
     	[view removeFromSuperview];
     }
     [self.scrollview removeFromSuperview];
+    [self.snapshotView removeFromSuperview];
     self.scrollview.contentOffset = CGPointMake(0,0);
 }
 - (void)layoutSubviews {
 	[super layoutSubviews];
 	[self addSubview:self.scrollview];
 	[self.scrollview addSubview: self.iconView];
+	if (SNAPSHOTS_ENABLED) {
+		((UIView *)[self.iconView _iconImageView]).layer.transform = CATransform3DMakeScale(0.6,0.6,0.6);
+		CGFloat yChange = 0.8*[%c(SBIconView) defaultIconSize].height;
+		((UIView *)[self.iconView _iconImageView]).layer.transform = CATransform3DTranslate(((UIView *)[self.iconView _iconImageView]).layer.transform,0,yChange,0);
+		[self.iconView setLabelHidden:true];
+		[MSHookIvar<UIView *>(self.iconView, "_accessoryView") removeFromSuperview];
+		[self.scrollview insertSubview:self.snapshotView atIndex:0];
+		self.snapshotView.image = self.snapshot;
+	}
 }
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView {
 	if (scrollView.contentOffset.y > 20) {
@@ -132,8 +148,8 @@ ios 9 only, old code commented out
     self.collectionView.backgroundColor = UIColor.clearColor;
     [self.collectionView registerClass:[CSwitcherCell class] forCellWithReuseIdentifier:@"CellView"];
     self.collectionView.showsHorizontalScrollIndicator = false;
-    self.collectionView.pagingEnabled = true;
-    flowLayout.sectionInset = UIEdgeInsetsMake(0, 5, 2, 5);
+    if(PAGING_ENABLED)self.collectionView.pagingEnabled = true;
+    flowLayout.sectionInset = UIEdgeInsetsMake(0, 5, 10, 5);
 
     [self.view addSubview:self.collectionView];
 }
@@ -148,17 +164,12 @@ ios 9 only, old code commented out
 
 -(UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath {
 	CSwitcherCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"CellView" forIndexPath:indexPath];
-	NSLog(@"CSwitcher - %@",indexPath);
 	NSString *identifier = ((SBDisplayItem *)[self.recentApplications objectAtIndex:indexPath.row]).displayIdentifier;
 
 	SBApplicationController *appController = [%c(SBApplicationController) sharedInstanceIfExists];
 	SBApplication *app = [appController applicationWithBundleIdentifier:identifier];
 	SBApplicationIcon *appIcon = [[%c(SBApplicationIcon) alloc] initWithApplication:app];
 	SBIconView *iconView = [[%c(SBIconView) alloc] initWithContentType:0];
-	//iconView.frame = CGRectMake(0,0,[%c(SBIconView) defaultIconSize].width,[%c(SBIconView) defaultIconSize].height);
-	//CGRect labelFrame = ((UIView *)[iconView labelView]).frame;
-	//labelFrame.origin.y += [[iconView class] defaultIconImageSize].height;
-	//((UIView *)[iconView labelView]).frame = labelFrame;
 	iconView.icon = appIcon;
 	iconView.delegate = [%c(SBIconController) sharedInstance];
 
@@ -166,8 +177,27 @@ ios 9 only, old code commented out
 	iconView.tag = 101;
 	cell.iconView = iconView;
 
-	//SBAppSwitcherSnapshotView *snapshot = [[%c(SBAppSwitcherSnapshotView) alloc] initWithDisplayItem:nil application:app orientation:[(SpringBoard *)[objc_getClass("SpringBoard") sharedApplication] activeInterfaceOrientation] async:NO withQueue:MSHookIvar<NSObject *>([%c(SBAppSwitcherController) sharedController], "_snapshotQueue") statusBarCache:nil];
-	//cell.snapshot = snapshot;
+	//iOS 9 has made it way too difficult to get app previews, also will crash if one of these is nil for some reason
+	//lets put this in a try at some point and throw if we ever get nil
+	NSString *snapShotContainerPath = [[app _snapshotManifest] containerPath];
+	NSArray *firstDir = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:snapShotContainerPath error:nil];
+	NSString *correctSnapShotContainerPath = [snapShotContainerPath stringByAppendingString:[@"/" stringByAppendingString:firstDir[0]]];
+	NSArray *allSnapshots = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:correctSnapShotContainerPath error:nil];
+	NSDate *newestDate;
+	NSString *newestSnapshotPath;
+	for (NSString *fileName in allSnapshots) {
+		if (![fileName isEqual:@"downscaled"]) {
+			NSString *fullSnapPath = [correctSnapShotContainerPath stringByAppendingString:[@"/" stringByAppendingString:fileName]];
+			NSDictionary *fileAttr = [[NSFileManager defaultManager] attributesOfItemAtPath:fullSnapPath error:nil];
+			NSDate *fileCreationDate = (NSDate *)[fileAttr objectForKey:NSFileCreationDate];
+			if (newestDate == nil || [fileCreationDate compare:newestDate] == NSOrderedDescending) {
+				newestDate = fileCreationDate;
+				newestSnapshotPath = fullSnapPath;
+			}
+		}
+	}
+	cell.snapshot = [[UIImage alloc] initWithContentsOfFile:newestSnapshotPath];
+
 
 	return cell;
 }

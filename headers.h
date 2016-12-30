@@ -30,6 +30,7 @@
 
 @interface SBAppSwitcherSnapshotView : UIView
 -(id)initWithDisplayItem:(id)arg1 application:(id)arg2 orientation:(long long)arg3 async:(BOOL)arg4 withQueue:(id)arg5 statusBarCache:(id)arg6 ;
++ (id)appSwitcherSnapshotViewForDisplayItem:(id)arg1 orientation:(long long)arg2 loadAsync:(_Bool)arg3 withQueue:(id)arg4;
 @end
 
 @interface SBApplicationController : NSObject
@@ -38,9 +39,12 @@
 + (id)sharedInstance;
 
 @end
-
+@interface XBApplicationSnapshotManifest :NSObject
+- (NSString *)containerPath;
+@end
 @interface SBApplication : NSObject
 - (id)bundleIdentifier;
+- (XBApplicationSnapshotManifest *)_snapshotManifest;
 @end
 
 @interface SBIcon : NSObject
@@ -59,7 +63,10 @@
 + (CGSize)defaultIconSize;
 - (void)setHighlighted:(BOOL)arg1;
 - (id)labelView;
+- (id)_iconImageView;
+- (void)setLabelHidden:(BOOL)arg1;
 + (CGSize)defaultIconImageSize;
+- (void)_applyIconAccessoryAlpha:(double)arg1;
 @end
 
 @interface SpringBoard
@@ -74,10 +81,13 @@
 @interface SBDisplayItem
 @property (nonatomic, assign) NSString *displayIdentifier;
 @end
-
+@interface SBAppSwitcherPageView : UIView
+@property(retain, nonatomic) SBDisplayItem *displayItem; // @synthesize displayItem=_displayItem;
+@end
 @interface CSwitcherCell : UICollectionViewCell <UIScrollViewDelegate>
 @property (nonatomic, strong) SBIconView *iconView;
-@property (nonatomic, strong) SBAppSwitcherSnapshotView *snapshot;
+@property (nonatomic, strong) UIImage *snapshot;
 @property (nonatomic, strong) UIScrollView *scrollview;
+@property (nonatomic, strong) UIImageView *snapshotView;
 @end
 
