@@ -76,6 +76,7 @@
 @interface SBControlCenterContentView
 -(void)_addSectionController:(id)arg1 ;
 - (double)contentHeightForOrientation:(long long)arg1;
+- (id)quickLaunchSection;
 @end
 
 @interface SBDisplayItem

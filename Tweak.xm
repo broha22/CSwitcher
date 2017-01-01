@@ -5,6 +5,7 @@
 #define ICON_INSET 10
 #define PAGING_ENABLED true
 #define SNAPSHOTS_ENABLED true
+#define REPLACE_QL false
 /*
 ios 9 only, old code commented out
 */
@@ -44,7 +45,9 @@ ios 9 only, old code commented out
 			CGFloat evenSpace = (((float)(DEVICE_WIDTH-(ICON_INSET*2))/(float)ICON_COUNT));
 			NSInteger secNum = ((int)index/(int)ICON_COUNT);
 			CGFloat newX = evenSpace*(index%ICON_COUNT)+ICON_INSET+(DEVICE_WIDTH*secNum)+(evenSpace-defaultsize)/2;
-			attr.frame = CGRectMake(newX,attr.frame.origin.y,attr.frame.size.width,attr.frame.size.height);
+			CGRect newFrame = CGRectMake(newX,attr.frame.origin.y,attr.frame.size.width,attr.frame.size.height);
+			if(SNAPSHOTS_ENABLED)newFrame.origin.y -= 15;
+			attr.frame = newFrame;
 		}
 	}
 	return attributes;
@@ -63,7 +66,10 @@ ios 9 only, old code commented out
 		self.scrollview.clipsToBounds = false;
 		self.scrollview.showsVerticalScrollIndicator = false;
 		self.scrollview.delegate = self;
-		self.snapshotView = [[UIImageView alloc] initWithFrame:CGRectMake(0,0,frame.size.width, DEVICE_HEIGHT*(frame.size.width/DEVICE_WIDTH))];
+		self.snapshotView = [[UIImageView alloc] initWithFrame:CGRectMake(0,0,frame.size.width,DEVICE_HEIGHT*(frame.size.width/DEVICE_WIDTH))];
+		self.snapshotView.backgroundColor = [[UIColor blackColor] colorWithAlphaComponent:0.3];
+		UITapGestureRecognizer *tapLaunch = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(tappedContainer:)];
+		[self addGestureRecognizer:tapLaunch];
 	}
 	return self;
 }
@@ -73,6 +79,7 @@ ios 9 only, old code commented out
     	[view removeFromSuperview];
     }
     [self.scrollview removeFromSuperview];
+    self.snapshotView.image = nil;
     [self.snapshotView removeFromSuperview];
     self.scrollview.contentOffset = CGPointMake(0,0);
 }
@@ -89,6 +96,10 @@ ios 9 only, old code commented out
 		[self.scrollview insertSubview:self.snapshotView atIndex:0];
 		self.snapshotView.image = self.snapshot;
 	}
+}
+- (void)tappedContainer:(UIView *)container {
+	SBApplication *app = [(SBApplicationController *)[%c(SBApplicationController) sharedInstance] applicationWithBundleIdentifier:[self.iconView.icon applicationBundleID]];
+	[[UIApplication sharedApplication] launchApplicationWithIdentifier:[app bundleIdentifier] suspended:NO];
 }
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView {
 	if (scrollView.contentOffset.y > 20) {
@@ -125,6 +136,8 @@ ios 9 only, old code commented out
     return sharedInstance;
 }
 - (CGFloat)newHeightFromOld:(CGFloat)oldHeight orientation:(NSInteger)orientation {
+	if (SNAPSHOTS_ENABLED)oldHeight += 20;
+	if (!REPLACE_QL)oldHeight += 100;
 	self.controlHeight = oldHeight;
 	return oldHeight;
 }
@@ -135,7 +148,12 @@ ios 9 only, old code commented out
 - (void)viewDidLoad {
     [super viewDidLoad];    
     [self.collectionView release];
-    self.view.frame = CGRectMake(0,self.controlHeight-100,DEVICE_WIDTH,98);
+    CGRect contentViewFrame = CGRectMake(0,self.controlHeight-100,DEVICE_WIDTH,98);
+    if (SNAPSHOTS_ENABLED) {
+    	contentViewFrame.origin.y -= 20;
+    	contentViewFrame.size.height += 20;
+    }
+    self.view.frame = contentViewFrame;
     self.recentApplications = [(SBAppSwitcherModel *)[%c(SBAppSwitcherModel) sharedInstance] mainSwitcherDisplayItems];
     
     CSwitcherFlowLayout *flowLayout = [[CSwitcherFlowLayout alloc] init];
@@ -149,7 +167,7 @@ ios 9 only, old code commented out
     [self.collectionView registerClass:[CSwitcherCell class] forCellWithReuseIdentifier:@"CellView"];
     self.collectionView.showsHorizontalScrollIndicator = false;
     if(PAGING_ENABLED)self.collectionView.pagingEnabled = true;
-    flowLayout.sectionInset = UIEdgeInsetsMake(0, 5, 10, 5);
+    //flowLayout.sectionInset = UIEdgeInsetsMake(0, 5, 10, 5);
 
     [self.view addSubview:self.collectionView];
 }
@@ -173,31 +191,40 @@ ios 9 only, old code commented out
 	iconView.icon = appIcon;
 	iconView.delegate = [%c(SBIconController) sharedInstance];
 
-	//Note I should change this at some point but for now it will work
-	iconView.tag = 101;
+	iconView.userInteractionEnabled = false;
 	cell.iconView = iconView;
 
-	//iOS 9 has made it way too difficult to get app previews, also will crash if one of these is nil for some reason
-	//lets put this in a try at some point and throw if we ever get nil
-	NSString *snapShotContainerPath = [[app _snapshotManifest] containerPath];
-	NSArray *firstDir = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:snapShotContainerPath error:nil];
-	NSString *correctSnapShotContainerPath = [snapShotContainerPath stringByAppendingString:[@"/" stringByAppendingString:firstDir[0]]];
-	NSArray *allSnapshots = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:correctSnapShotContainerPath error:nil];
-	NSDate *newestDate;
-	NSString *newestSnapshotPath;
-	for (NSString *fileName in allSnapshots) {
-		if (![fileName isEqual:@"downscaled"]) {
-			NSString *fullSnapPath = [correctSnapShotContainerPath stringByAppendingString:[@"/" stringByAppendingString:fileName]];
-			NSDictionary *fileAttr = [[NSFileManager defaultManager] attributesOfItemAtPath:fullSnapPath error:nil];
-			NSDate *fileCreationDate = (NSDate *)[fileAttr objectForKey:NSFileCreationDate];
-			if (newestDate == nil || [fileCreationDate compare:newestDate] == NSOrderedDescending) {
-				newestDate = fileCreationDate;
-				newestSnapshotPath = fullSnapPath;
+	//iOS 9 has made it way too difficult to get app previews
+	@try {
+		NSException *generalErrorException = [NSException exceptionWithName:@"generalErrorException" reason:@"Snap shot container path was empty or not found" userInfo:nil];
+		NSString *snapShotContainerPath = [[app _snapshotManifest] containerPath];
+		NSError *errorFD;
+		NSArray *firstDir = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:snapShotContainerPath error:&errorFD];
+		if (errorFD || !firstDir)@throw generalErrorException;
+
+		NSString *correctSnapShotContainerPath = [snapShotContainerPath stringByAppendingString:[@"/" stringByAppendingString:firstDir[0]]];
+		NSError *errorSD;
+		NSArray *allSnapshots = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:correctSnapShotContainerPath error:&errorSD];
+		if (errorSD || !allSnapshots)@throw generalErrorException;
+
+		NSDate *newestDate = nil;
+		NSString *newestSnapshotPath = nil;
+		for (NSString *fileName in allSnapshots) {
+			if (![fileName isEqual:@"downscaled"]) {
+				NSString *fullSnapPath = [correctSnapShotContainerPath stringByAppendingString:[@"/" stringByAppendingString:fileName]];
+				NSDictionary *fileAttr = [[NSFileManager defaultManager] attributesOfItemAtPath:fullSnapPath error:nil];
+				NSDate *fileCreationDate = (NSDate *)[fileAttr objectForKey:NSFileCreationDate];
+				if (newestDate == nil || [fileCreationDate compare:newestDate] == NSOrderedDescending) {
+					newestDate = fileCreationDate;
+					newestSnapshotPath = fullSnapPath;
+				}
 			}
 		}
+		cell.snapshot = [[UIImage alloc] initWithContentsOfFile:newestSnapshotPath];
 	}
-	cell.snapshot = [[UIImage alloc] initWithContentsOfFile:newestSnapshotPath];
-
+	@catch(NSException *e) {
+		NSLog(@"CSwitcher - Failed to create cell snapshot %@",e);
+	}	
 
 	return cell;
 }
@@ -210,37 +237,22 @@ ios 9 only, old code commented out
 
 %hook SBControlCenterContentView
 -(void)layoutSubviews {
-	//[self contentHeightForOrientation:[[UIDevice currentDevice] orientation]];
 	%orig;
 	[self _addSectionController:[CSwitcherController sharedInstance]];
+	UIView *QLView = ((UIViewController *)[self quickLaunchSection]).view;
+	QLView.frame = CGRectMake(QLView.frame.origin.x,QLView.frame.origin.y,QLView.frame.size.width,QLView.frame.size.height-[CSwitcherController sharedInstance].view.frame.size.height);
 	
 }
 -(void)_addSectionController:(id)arg1 {
-	if (![arg1 isKindOfClass:[%c(SBCCQuickLaunchSectionController) class]]) {
-		%orig();
-		
+	if ([arg1 isKindOfClass:[%c(SBCCQuickLaunchSectionController) class]] && REPLACE_QL) {
+		return;		
 	}
-	
+	%orig;
 }
 - (double)contentHeightForOrientation:(long long)arg1 {
 	return [[CSwitcherController sharedInstance] newHeightFromOld:%orig orientation:arg1];
 }
 %end
-
-%hook SBIconController
-- (void)iconTapped:(id)arg1 {
-	SBIconView *iconView = arg1;
-	if (iconView.tag == 101) {
-			[iconView setHighlighted:NO];
-			SBApplication *app = [(SBApplicationController *)[%c(SBApplicationController) sharedInstance] applicationWithBundleIdentifier:[iconView.icon applicationBundleID]];
-			[[UIApplication sharedApplication] launchApplicationWithIdentifier:[app bundleIdentifier] suspended:NO];
-	}
-	else {
-		%orig;
-	}
-}
-%end
-
 %ctor {
 	NSLog(@"CSwitcher loaded");
 }
